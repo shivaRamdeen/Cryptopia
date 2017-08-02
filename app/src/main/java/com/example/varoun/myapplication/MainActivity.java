@@ -8,10 +8,12 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -43,9 +45,9 @@ public class MainActivity extends AppCompatActivity {
 
     String[] Wallet_ADDRESS = {"112r4JUekDqWcwbaP2hy65qqAQ8xCRsqqv", "0x4055fa29270f001995e4472ed2fed77c86d778ed", "198aMn6ZYAczwrE5NvNTUMyJ5qkfy4g3Hi", "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"};
 
-    List<String> Wallet_TYPE_OF_ADDRESS_ARRAY = new ArrayList<String>();
-    List<String> Wallet_NAME_ARRAY = new ArrayList<String>();
-    List<String> Wallet_ADDRESS_ARRAY = new ArrayList<String>();
+    ArrayList<String> Wallet_TYPE_OF_ADDRESS_ARRAY = new ArrayList<String>();
+    ArrayList<String> Wallet_NAME_ARRAY = new ArrayList<String>();
+    ArrayList<String> Wallet_ADDRESS_ARRAY = new ArrayList<String>();
 
 
 
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
                 //new JSONTASK().execute("https://blockchain.info/q/addressbalance/1EzwoHtiXB4iFwedPr49iywjZn2nnekhoj?confirmations=6");
                 //Snackbar.make(view, "Figuring it Out", Snackbar.LENGTH_LONG)
                 //        .setAction("Action", null).show();
+
                 AlertDialog.Builder mBuilder = new AlertDialog.Builder(MainActivity.this);
                 View mView = getLayoutInflater().inflate(R.layout.dialog_add_address, null);
                 final Spinner CoinType = (Spinner) mView.findViewById(R.id.spinner);
@@ -98,18 +101,23 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
 
                         if(!nameAddress.getText().toString().isEmpty() && !publicAddress.getText().toString().isEmpty()){
-                            if(CoinType.toString()=="BTC"){
+                            Log.d("ADebugTag", "cOINTYPE: " + CoinType.getSelectedItem().toString());
+                            if(CoinType.getSelectedItem().toString().equals("BTC")){
                                 Wallet_TYPE_OF_ADDRESS_ARRAY.add("1");
-                            }else if(CoinType.toString()=="ETH"){
+                            }else if(CoinType.getSelectedItem().toString().equals("ETH")){
                                 Wallet_TYPE_OF_ADDRESS_ARRAY.add("2");
-                            }else if(CoinType.toString()=="LTC"){
+                            }else if(CoinType.getSelectedItem().toString().equals("LTC")){
                                 Wallet_TYPE_OF_ADDRESS_ARRAY.add("3");
-                            }else if(CoinType.toString()=="XRP"){
+                            }else if(CoinType.getSelectedItem().toString().equals("XRP")){
                                 Wallet_TYPE_OF_ADDRESS_ARRAY.add("4");
+                            }else
+                            {
+                                //default
+                                Wallet_TYPE_OF_ADDRESS_ARRAY.add("1");
                             }
 
-                            Wallet_NAME_ARRAY.add(nameAddress.toString());
-                            Wallet_ADDRESS_ARRAY.add(publicAddress.toString());
+                            Wallet_NAME_ARRAY.add(nameAddress.getText().toString());
+                            Wallet_ADDRESS_ARRAY.add(publicAddress.getText().toString());
 
                             Toast.makeText(MainActivity.this,
                                     R.string.address_added,
@@ -155,8 +163,8 @@ public class MainActivity extends AppCompatActivity {
             TextView textView_name = (TextView)view.findViewById(R.id.textView_wallet_name);
             TextView textView_address = (TextView)view.findViewById(R.id.textView_wallet_address);
 
-            int image_num = Integer.parseInt(Wallet_TYPE_OF_ADDRESS_ARRAY.get(i));
-            imageView.setImageResource(IMAGES[image_num - 1]);
+            int image_num = Integer.parseInt(Wallet_TYPE_OF_ADDRESS_ARRAY.get(i)) - 1;
+            imageView.setImageResource(IMAGES[image_num ]);
             textView_name.setText(Wallet_NAME_ARRAY.get(i));
             textView_address.setText(Wallet_ADDRESS_ARRAY.get(i));
             return view;
@@ -166,9 +174,11 @@ public class MainActivity extends AppCompatActivity {
     public class JSONTASK extends AsyncTask<String, String, String>{
 
         @Override
-        protected String doInBackground(String... urls) {
+        protected String doInBackground(String... urls)
+        {
             HttpURLConnection connection = null;
             BufferedReader reader = null;
+
 
             try {
                 URL url = new URL(urls[0]);
@@ -184,29 +194,30 @@ public class MainActivity extends AppCompatActivity {
                 String line = "";
                 while ((line = reader.readLine()) != null) {
                     buffer.append(line);
+
+                    return buffer.toString();
                 }
 
-                return buffer.toString();
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-                try {
-                    if (reader != null) {
-                        reader.close();
-                    }
-                } catch (IOException e) {
+                }catch(MalformedURLException e){
                     e.printStackTrace();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }finally{
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
+                    try {
+                        if (reader != null) {
+                            reader.close();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
+
+                return null;
             }
 
-            return null;
-        }
 
 
         @Override
