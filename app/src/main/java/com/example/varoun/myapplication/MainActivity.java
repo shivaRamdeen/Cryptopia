@@ -23,6 +23,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,8 +56,10 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> Wallet_TYPE_OF_ADDRESS_ARRAY = new ArrayList<String>();
     ArrayList<String> Wallet_NAME_ARRAY = new ArrayList<String>();
     ArrayList<String> Wallet_ADDRESS_ARRAY = new ArrayList<String>();
+    ArrayList<String> Wallet_BALANCE = new ArrayList<String>();
 
-
+    //url for wallet balance api this needs to be tied to each individual wallet
+    String url ="https://blockchain.info/q/addressbalance/1EzwoHtiXB4iFwedPr49iywjZn2nnekhoj?confirmations=6";
 
     private TextView text;
 
@@ -64,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
             Wallet_TYPE_OF_ADDRESS_ARRAY.add(Wallet_TYPE_OF_ADDRESS[i]);
             Wallet_NAME_ARRAY.add(Wallet_NAME[i]);
             Wallet_ADDRESS_ARRAY.add(Wallet_ADDRESS[i]);
+            Wallet_BALANCE.add("1.00");
             /*
             j++;
             if(i==3){
@@ -73,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
             }
             */
         }
+        RequestQueue queue = Volley.newRequestQueue(this);
 
 
         ListView listView = (ListView)findViewById(R.id.listView);
@@ -80,6 +92,11 @@ public class MainActivity extends AppCompatActivity {
         CustomAdapter customAdapter = new CustomAdapter();
 
         listView.setAdapter(customAdapter);
+
+        // Instantiate the RequestQueue.
+
+
+        updateWalletBalance(url,queue,customAdapter,0);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -101,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
 
                         if(!nameAddress.getText().toString().isEmpty() && !publicAddress.getText().toString().isEmpty()){
-                            Log.d("ADebugTag", "cOINTYPE: " + CoinType.getSelectedItem().toString());
+
                             if(CoinType.getSelectedItem().toString().equals("BTC")){
                                 Wallet_TYPE_OF_ADDRESS_ARRAY.add("1");
                             }else if(CoinType.getSelectedItem().toString().equals("ETH")){
@@ -112,12 +129,14 @@ public class MainActivity extends AppCompatActivity {
                                 Wallet_TYPE_OF_ADDRESS_ARRAY.add("4");
                             }else
                             {
-                                //default
+                                //default to btc icon..should never need this if code works
                                 Wallet_TYPE_OF_ADDRESS_ARRAY.add("1");
                             }
 
                             Wallet_NAME_ARRAY.add(nameAddress.getText().toString());
                             Wallet_ADDRESS_ARRAY.add(publicAddress.getText().toString());
+                            //add placeholder for wallet balance
+                            Wallet_BALANCE.add("0.00");
 
                             Toast.makeText(MainActivity.this,
                                     R.string.address_added,
@@ -137,6 +156,9 @@ public class MainActivity extends AppCompatActivity {
                 dialog.show();
             }
         });
+        //get and update wallet balance
+        updateWalletBalance(url,queue,customAdapter,0);
+        updateWalletBalance(url,queue,customAdapter,1);
     }
 
     class CustomAdapter extends BaseAdapter {
@@ -162,14 +184,18 @@ public class MainActivity extends AppCompatActivity {
             ImageView imageView = (ImageView)view.findViewById(R.id.imageView);
             TextView textView_name = (TextView)view.findViewById(R.id.textView_wallet_name);
             TextView textView_address = (TextView)view.findViewById(R.id.textView_wallet_address);
+            TextView textView_wallet_balance = (TextView) view.findViewById(R.id.wallet_balance);
 
             int image_num = Integer.parseInt(Wallet_TYPE_OF_ADDRESS_ARRAY.get(i)) - 1;
             imageView.setImageResource(IMAGES[image_num ]);
             textView_name.setText(Wallet_NAME_ARRAY.get(i));
             textView_address.setText(Wallet_ADDRESS_ARRAY.get(i));
+            textView_wallet_balance.setText(Wallet_BALANCE.get(i));
             return view;
         }
+
     }
+
 
     public class JSONTASK extends AsyncTask<String, String, String>{
 
@@ -257,5 +283,34 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void updateWalletBalance(String url, final RequestQueue queue, final CustomAdapter customAdapter, final int Wallet_INDEX)
+    {
+
+
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        //update wallet balance
+
+                        //TODO:calcs based on api used.
+                        double response_int = Double.parseDouble(response);
+                        double balance_in_btc = response_int*0.00000001;
+                        Wallet_BALANCE.set(Wallet_INDEX,Double.toString(balance_in_btc));
+                        //notify system to update listview
+                        customAdapter.notifyDataSetChanged();
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast toast = Toast.makeText(getApplicationContext(),"Error Contacting API",Toast.LENGTH_SHORT);
+                toast.show();
+            }
+        });
+// Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 }
