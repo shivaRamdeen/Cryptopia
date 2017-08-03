@@ -53,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
 
     String[] Wallet_ADDRESS = {"112r4JUekDqWcwbaP2hy65qqAQ8xCRsqqv", "0x4055fa29270f001995e4472ed2fed77c86d778ed", "198aMn6ZYAczwrE5NvNTUMyJ5qkfy4g3Hi", "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"};
 
+    String[] Coin_API = {"https://blockchain.info/q/addressbalance/", "https://api.etherscan.io/api?module=account&action=balance&address=0x618ee4ff89becd423d7345c406e58a53e61ffbcc", "http://ltc.blockr.io/api/v1/address/balance/198aMn6ZYAczwrE5NvNTUMyJ5qkfy4g3Hi", "https://data.ripple.com/v2/accounts/r3kmLJN5D28dHuH8vZNUZpMC43pEHpaocV/balances"};
+
     ArrayList<String> Wallet_TYPE_OF_ADDRESS_ARRAY = new ArrayList<String>();
     ArrayList<String> Wallet_NAME_ARRAY = new ArrayList<String>();
     ArrayList<String> Wallet_ADDRESS_ARRAY = new ArrayList<String>();
@@ -60,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
 
     //url for wallet balance api this needs to be tied to each individual wallet
     String url ="https://blockchain.info/q/addressbalance/1EzwoHtiXB4iFwedPr49iywjZn2nnekhoj?confirmations=6";
+    String urlETHapi = "https://api.etherscan.io/api?module=account&action=balance&address=0x618ee4ff89becd423d7345c406e58a53e61ffbcc&tag=latest&apikey=D5VCEHDWVR2X4MBF254TG27NGA6YZK2FBV";
+    String allXRP_api_calls = "https://data.ripple.com/";
+    //-----------------------------------------------------------------------------
 
     private TextView text;
 
