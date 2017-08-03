@@ -28,8 +28,12 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,10 +55,12 @@ public class MainActivity extends AppCompatActivity {
 
     String[] Wallet_NAME = {"Varoun Wallet", "Wallet From Mining", "Varoun LTC Stash", "Ripple for The Boys"};
 
-    String[] Wallet_ADDRESS = {"112r4JUekDqWcwbaP2hy65qqAQ8xCRsqqv", "0x4055fa29270f001995e4472ed2fed77c86d778ed", "198aMn6ZYAczwrE5NvNTUMyJ5qkfy4g3Hi", "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"};
+    String[] Wallet_ADDRESS = {"1EzwoHtiXB4iFwedPr49iywjZn2nnekhoj", "0x4055fa29270f001995e4472ed2fed77c86d778ed", "LWdfXUxLBV9nCJ6yk5Ed2pBNhiV7kTaTQJ", "r3kmLJN5D28dHuH8vZNUZpMC43pEHpaocV"};
 
-    String[] Coin_API = {"https://blockchain.info/q/addressbalance/", "https://api.etherscan.io/api?module=account&action=balance&address=0x618ee4ff89becd423d7345c406e58a53e61ffbcc", "http://ltc.blockr.io/api/v1/address/balance/198aMn6ZYAczwrE5NvNTUMyJ5qkfy4g3Hi", "https://data.ripple.com/v2/accounts/r3kmLJN5D28dHuH8vZNUZpMC43pEHpaocV/balances"};
-
+    //endpoints to get wallet info
+    String[] Coin_API_BASE = {"https://blockchain.info/q/addressbalance/", "https://api.etherscan.io/api?module=account&action=balance&address=", "http://ltc.blockr.io/api/v1/address/balance/", "https://data.ripple.com/v2/accounts/"};
+    //strings that must be appended to base url after wallet address
+    String[] Coin_API_ENDING ={"?confirmations=6","","","/balances"};
     ArrayList<String> Wallet_TYPE_OF_ADDRESS_ARRAY = new ArrayList<String>();
     ArrayList<String> Wallet_NAME_ARRAY = new ArrayList<String>();
     ArrayList<String> Wallet_ADDRESS_ARRAY = new ArrayList<String>();
@@ -97,11 +103,6 @@ public class MainActivity extends AppCompatActivity {
         CustomAdapter customAdapter = new CustomAdapter();
 
         listView.setAdapter(customAdapter);
-
-        // Instantiate the RequestQueue.
-
-
-        updateWalletBalance(url,queue,customAdapter,0);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -162,8 +163,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         //get and update wallet balance
-        updateWalletBalance(url,queue,customAdapter,0);
-        updateWalletBalance(url,queue,customAdapter,1);
+        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,0);
+        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,1);
+        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,2);
+        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,3);
     }
 
     class CustomAdapter extends BaseAdapter {
@@ -290,32 +293,134 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void updateWalletBalance(String url, final RequestQueue queue, final CustomAdapter customAdapter, final int Wallet_INDEX)
+    public void updateWalletBalance(String[] coin_endpoint_base, String[] coin_endpoint_end, final RequestQueue queue, final CustomAdapter customAdapter, final int Wallet_INDEX)
     {
 
+        //create request and response based on type of coin
+        if(Wallet_TYPE_OF_ADDRESS[Wallet_INDEX].equals("1")) //btc
+        {
+            // Request a string response from the provided URL.
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, coin_endpoint_base[Wallet_INDEX] + Wallet_ADDRESS[Wallet_INDEX] + coin_endpoint_end[Wallet_INDEX],
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
 
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        //update wallet balance
+                            double response_int = Double.parseDouble(response);
+                            double balance_in_btc = response_int * 0.00000001;
+                            Wallet_BALANCE.set(Wallet_INDEX, Double.toString(balance_in_btc));
+                            //notify system to update listview
+                            customAdapter.notifyDataSetChanged();
 
-                        //TODO:calcs based on api used.
-                        double response_int = Double.parseDouble(response);
-                        double balance_in_btc = response_int*0.00000001;
-                        Wallet_BALANCE.set(Wallet_INDEX,Double.toString(balance_in_btc));
-                        //notify system to update listview
-                        customAdapter.notifyDataSetChanged();
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast toast = Toast.makeText(getApplicationContext(),"Error Contacting API",Toast.LENGTH_SHORT);
-                toast.show();
-            }
-        });
-// Add the request to the RequestQueue.
-        queue.add(stringRequest);
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast toast = Toast.makeText(getApplicationContext(),"Error Contacting BTC API",Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+            queue.add(stringRequest);
+        }
+        else if(Wallet_TYPE_OF_ADDRESS[Wallet_INDEX].equals("2")) //eth
+        {
+            // Request a json response from the provided URL.
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, coin_endpoint_base[Wallet_INDEX] + Wallet_ADDRESS[Wallet_INDEX] + coin_endpoint_end[Wallet_INDEX], null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+
+
+
+                            double response_int = 0;
+                            try {
+                                response_int=response.getDouble("result");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+
+                            //convert wei to ether
+                            double balance_in_eth = response_int * 0.000000000000000001;
+                            Wallet_BALANCE.set(Wallet_INDEX, Double.toString(balance_in_eth));
+                            //notify system to update listview
+                            customAdapter.notifyDataSetChanged();
+
+
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast toast = Toast.makeText(getApplicationContext(),"Error Contacting ETH API",Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+            queue.add(jsonObjectRequest);
+        }
+        else if(Wallet_TYPE_OF_ADDRESS[Wallet_INDEX].equals("3")) //ltc
+        {
+            // Request a json response from the provided URL.
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, coin_endpoint_base[Wallet_INDEX] + Wallet_ADDRESS[Wallet_INDEX] + coin_endpoint_end[Wallet_INDEX], null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+
+
+
+                           String balance = "";
+                            try {
+                                balance=response.getJSONObject("data").getString("balance");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                            Wallet_BALANCE.set(Wallet_INDEX, balance);
+                            //notify system to update listview
+                            customAdapter.notifyDataSetChanged();
+
+
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast toast = Toast.makeText(getApplicationContext(),"Error Contacting LTC API",Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+            queue.add(jsonObjectRequest);
+        }
+        else if(Wallet_TYPE_OF_ADDRESS[Wallet_INDEX].equals("4")) //ltc
+        {
+            // Request a json response from the provided URL.
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, coin_endpoint_base[Wallet_INDEX] + Wallet_ADDRESS[Wallet_INDEX] + coin_endpoint_end[Wallet_INDEX], null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+
+
+
+                            String balance = "";
+                            try {
+                                balance=response.getJSONArray("balances").getJSONObject(0).getString("value");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                            Wallet_BALANCE.set(Wallet_INDEX, balance);
+                            //notify system to update listview
+                            customAdapter.notifyDataSetChanged();
+
+
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast toast = Toast.makeText(getApplicationContext(),"Error Contacting XRP API",Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+            queue.add(jsonObjectRequest);
+        }
+
+
     }
 }
