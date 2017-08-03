@@ -162,11 +162,11 @@ public class MainActivity extends AppCompatActivity {
                 dialog.show();
             }
         });
-        //get and update wallet balance
-        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,0);
-        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,1);
-        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,2);
-        updateWalletBalance(Coin_API_BASE,Coin_API_ENDING,queue,customAdapter,3);
+
+        //update all existing wallet balances on create
+        for(int x=0; x < Wallet_ADDRESS.length; x++) {
+            updateWalletBalance(Coin_API_BASE, Coin_API_ENDING, queue, customAdapter, x);
+        }
     }
 
     class CustomAdapter extends BaseAdapter {
