@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -66,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> Wallet_ADDRESS_ARRAY = new ArrayList<String>();
     ArrayList<String> Wallet_BALANCE = new ArrayList<String>();
 
+    SwipeRefreshLayout swipeRefreshLayout;
+
     //url for wallet balance api this needs to be tied to each individual wallet
     String url ="https://blockchain.info/q/addressbalance/1EzwoHtiXB4iFwedPr49iywjZn2nnekhoj?confirmations=6";
     String urlETHapi = "https://api.etherscan.io/api?module=account&action=balance&address=0x618ee4ff89becd423d7345c406e58a53e61ffbcc&tag=latest&apikey=D5VCEHDWVR2X4MBF254TG27NGA6YZK2FBV";
@@ -95,12 +98,11 @@ public class MainActivity extends AppCompatActivity {
             }
             */
         }
-        RequestQueue queue = Volley.newRequestQueue(this);
-
+        final RequestQueue queue = Volley.newRequestQueue(this);
 
         ListView listView = (ListView)findViewById(R.id.listView);
 
-        CustomAdapter customAdapter = new CustomAdapter();
+        final CustomAdapter customAdapter = new CustomAdapter();
 
         listView.setAdapter(customAdapter);
 
@@ -167,6 +169,17 @@ public class MainActivity extends AppCompatActivity {
         for(int x=0; x < Wallet_ADDRESS.length; x++) {
             updateWalletBalance(Coin_API_BASE, Coin_API_ENDING, queue, customAdapter, x);
         }
+        //configure swipe refresh
+        final SwipeRefreshLayout swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
+        swipeRefreshLayout.setOnRefreshListener( new SwipeRefreshLayout.OnRefreshListener(){
+            @Override
+            public void onRefresh(){
+                for(int x=0; x < Wallet_ADDRESS.length; x++) {
+                    updateWalletBalance(Coin_API_BASE, Coin_API_ENDING, queue, customAdapter, x);
+                }
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
     }
 
     class CustomAdapter extends BaseAdapter {
